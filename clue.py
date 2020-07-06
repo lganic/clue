@@ -487,6 +487,18 @@ class player:
                 graphics.putTextArray(self.textBoxes[2],["moves remaining:"+str(self.remaining),"end turn","make guess"])
             else:
                 graphics.putTextArray(self.textBoxes[2],["moves remaining:"+str(self.remaining),"end turn"])
+
+
+        global showy,turn
+        for y in range(showy,25):
+            graphics.put(24,y,0,width=2)
+            if y-showy==turn:
+                graphics.putSprite(25,y,characterSprites.get(g.names[turn]))
+            else:
+                graphics.putSprite(24,y,characterSprites.get(g.names[y-showy]))
+
+
+
     def event(self,event):
         global globalEvent
         if globalEvent!="":
@@ -654,25 +666,84 @@ class player:
 #simple startup menu
 import tileGraphics
 g=tileGraphics.graphics(12,7,fullScreen=True)
-button=tileGraphics.textBox(g,8,1,4,1,nRows=1,rowBoxes=True)
+button=tileGraphics.textBox(g,8,0,4,1,nRows=1,rowBoxes=True)
+idk=[tileGraphics.textBox(g,8,1,1,1,nRows=1,rowBoxes=True),tileGraphics.textBox(g,9,1,2,1,nRows=1,rowBoxes=True),tileGraphics.textBox(g,11,1,1,1,nRows=1,rowBoxes=True)]
+button2=tileGraphics.textBox(g,8,2,4,1,nRows=1,rowBoxes=True)
 title=tileGraphics.textBox(g,0,0,7,1,font="terminal",nRows=1)
 characters=tileGraphics.textBox(g,0,1,4,6,font="terminal",rowBoxes=True,nRows=6)
-info=tileGraphics.textBox(g,8,2,4,5,nRows=10)
-g.putTextArray(info,["","","","d = disabled","a = ai","p = player","press s to start","hold esc at any time","to exit"])
+info=tileGraphics.textBox(g,8,3,4,4,nRows=8)
+g.putTextArray(idk[0],["<"])
+g.putTextArray(idk[2],[">"])
+g.putTextArray(info,["","d = disabled","a = ai","p = player","press s to start","hold esc at any time","to exit"])
 g.putTextArray(title,["clue               D  A  P"])
 g.putTextArray(characters,["scarlet","mustard","plum","peacock","green","white"])
 g.putTextArray(button,["shuffle"])
 rando=[0,1,2,3,4,5]
 data=[0,0,0,0,0,0]
+ss1=False
+ss2=False
+num=1
+import time
 for y in range(1,7):
     g.put(4,y,4)
 
-while not g.checkKey(115):
+
+while not g.checkKey(115) and not ss1:
     checkExit(g)
+    g.putTextArray(idk[1],[str(num)])
+    if num==1:
+        g.putTextArray(button2,["all random"])
+    else:
+        g.putTextArray(button2,["random"])
     g.update()
-    if g.checkClick():
+    if g.checkClick() or ss2:
         x, y=g.mouseTile()
-        if x>7 and x<12 and y>0 and y<2:
+        if (x==8 and y==1) and not ss2:
+            while g.checkClick():
+                g.update()
+            if num!=1:
+                num-=1
+        if (x==11 and y==1) and not ss2:
+            while g.checkClick():
+                g.update()
+            if num!=6:
+                num+=1
+        if (x>7 and x<12 and y==2) and not ss2:
+            while g.checkClick():
+                g.update()
+            from random import randint as rand
+            if num==1:
+                for a in range(300):
+                    num=rand(2,6)
+                    g.putTextArray(idk[1],[str(num)])
+                    g.update()
+                    checkExit(g)
+            data=[0,0,0,0,0,0]
+            while sum(data)<num:
+                data[rand(0,5)]=1
+            while sum(data)<num+1:
+                h=rand(0,5)
+                if data[h]==1:
+                    data[h]=2
+            tim=time.time()
+            ss2=True
+        if ss2:
+            dif=time.time()-tim
+            if dif>3:
+                g.putTextArray(characters,temp)
+                for b in range(1,7):
+                    for a in range(4,7):
+                        g.put(a,b,0)
+                    g.put(data[rando[b-1]]+4,b,4)
+                g.update()
+                ss2=False
+                g.update()
+                tim=time.time()
+                while time.time()-tim<1:
+                    g.update()
+                    checkExit(g)
+                ss1=True
+        if (x>7 and x<12 and y==0) or ss2:
             rando=scramble(rando)
             temp=[]
             for a in rando:
@@ -683,7 +754,7 @@ while not g.checkKey(115):
                     g.put(a,b,0)
                 g.put(data[rando[b-1]]+4,b,4)
             g.update()
-        if x>3 and y>0 and x<7 and y<7:
+        if (x>3 and y>0 and x<7 and y<7) and not ss2:
             c=y-1
             s=x-4
             if s==2:
@@ -726,9 +797,15 @@ import time
 time.sleep(1)
 turn=0
 cdat=cardData()
+showy=25-len(g.names)
 while not g.solved:
     print(g.names[turn]+"s turn")
-    graphics.putSprite(24,24,characterSprites.get(g.names[turn]))
+    for y in range(showy,25):
+        graphics.put(24,y,0,width=2)
+        if y-showy==turn:
+            graphics.putSprite(25,y,characterSprites.get(g.names[turn]))
+        else:
+            graphics.putSprite(24,y,characterSprites.get(g.names[y-showy]))
 #    if turn==0:
 #        players[0].debug()
     rv1=rand(1,6)
